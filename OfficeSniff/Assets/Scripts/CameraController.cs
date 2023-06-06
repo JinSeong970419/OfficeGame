@@ -3,10 +3,13 @@ namespace JS.officeSniff
     using System.Collections.Generic;
     using UnityEngine;
 
-    public class CameraConroller : MonoBehaviour
+    public class CameraController : MonoBehaviour
     {
+        [Header("RequiredObject")]
         [SerializeField] private Camera _camera = null;
         [SerializeField] private BoxCollider _mapSize = null;
+
+        [Header("Setting")]
         [SerializeField] private float _moveSpeed = 50;
         [SerializeField] private float _moveSmooth = 5;
         [SerializeField] private float _zoomSpeed = 5;
@@ -51,7 +54,14 @@ namespace JS.officeSniff
             Initialized(Vector3.zero, mapWidth, mapWidth, mapHeight, mapHeight, 60, 5, 3, 10);
         }
 
-        // 1_9:24
+        /// <summary>
+        /// 카메라 설정 및 기본 정보 Init
+        /// </summary>
+        /// <param name="center">초기 카메라 위치</param> /// <param name="right"></param>
+        /// <param name="right">카메라가 이동 가능한 오른쪽 최대 거리</param> <param name="left">카메라가 이동 가능한 왼쪽 최대 거리</param>
+        /// <param name="up">카메라가 이동 가능한 상단 최대 거리</param> <param name="down">카메라가 이동 가능한 하단 최대 거리</param>
+        /// <param name="angle"> 카메라 각도 </param>
+        /// <param name="zoom">최초 줌 크기</param> <param name="zoomMin">최소 줌</param> <param name="zoomMax">최대 줌</param>
         public void Initialized(Vector3 center, float right, float left, float up, float down, float angle, float zoom, float zoomMin, float zoomMax)
         {
             _center = center;
@@ -101,8 +111,6 @@ namespace JS.officeSniff
 
         private void MoveStarted()
         {
-            
-
             _moving = true;
         }
 
@@ -135,7 +143,7 @@ namespace JS.officeSniff
 
         private void Update()
         {
-            if(Input.touchSupported == false)
+            if (Input.touchSupported == false)
             {
                 float mouseScroll = _inputs.Main.MouseScroll.ReadValue<float>();
                 if(mouseScroll > 0)
@@ -193,7 +201,9 @@ namespace JS.officeSniff
             }
         }
 
-        // 3_1:40
+        /// <summary>
+        /// 카메라의 확대/축소, 최대/최소 이동 범위 제한
+        /// </summary>
         private void AdjustBounds()
         {
             if(_zoom < _zoomMin)
@@ -247,26 +257,37 @@ namespace JS.officeSniff
             }
         }
 
+        /// <summary>
+        /// 평면 직교 크기 계산 함수
+        /// </summary>
         private float PlaneOrtographicSize()
         {
             float h = _zoom * 2f;
             return h / Mathf.Sin(_angle * Mathf.Deg2Rad) / 2f;
         }
 
-        // 2_ 16:25
+        /// <summary>
+        /// World Position 찾기, 2차원 카메라 좌표에서 확대할 목표 앵커 백분율 값을 구하기 위한 계산 함수
+        /// </summary>
+        /// <param name="position">화면 위치(Vector2)의 값</param>
+        /// <returns>World Position</returns>
         private Vector3 CameraScrrenPositionToWorldPosition(Vector2 position)
         {
-            float h = _camera.orthographicSize * 2f;
-            float w = _camera.aspect * h;
+            float h = _camera.orthographicSize * 2f; // 화면의 height 값은 직교모드의 카메라 값의 2배
+            float w = _camera.aspect * h;            // height 크기에 따른 종횡비
             Vector3 ancher = _camera.transform.position - (_camera.transform.right.normalized * w / 2f) - (_camera.transform.up.normalized * h / 2f);
             return ancher + (_camera.transform.right.normalized * position.x / Screen.width * w) + (_camera.transform.up.normalized * position.y / Screen.height * h);
         }
 
+        /// <summary>
+        /// 카메라와 평명 사이의 거리
+        /// </summary>
+        /// <param name="position">화면 위치(Vector2)의 값</param>
         private Vector3 CameraScrrenPositionToPlanePosition(Vector2 position)
         {
             Vector3 point = CameraScrrenPositionToWorldPosition(position);
-            float h = point.y - _root.position.y;
-            float x = h/Mathf.Sin(_angle * Mathf.Deg2Rad);
+            float h = point.y - _root.position.y;                           // 구하고자 하는 카메라의 높이
+            float x = h / Mathf.Sin(_angle * Mathf.Deg2Rad);
             return point + _camera.transform.forward.normalized * x;
         }
     }
